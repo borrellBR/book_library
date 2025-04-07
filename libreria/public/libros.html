@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Gestor de Libros</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      height: 100vh;
+    }
+  </style>
+</head>
+
+<style>
+  body {
+    height: 100vh;
+    background-color: #718496;
+  }
+</style>
+
+<body class="d-flex justify-content-center align-items-center bg-blue">
+
+  <div class="bg-black w-100" style="max-width: 500px;">
+    <div class="bg-white p-4 rounded shadow-sm">
+      <h1 class="text-center mb-4">Gestor de Libros</h1>
+
+      <ul id="libro-list" class="list-group mb-4"></ul>
+
+      <h2 class="h5">Crear/Editar Libro</h2>
+      <input type="hidden" id="libro-id">
+
+      <div class="mb-3">
+        <input type="text" id="titulo" placeholder="Titulo" class="form-control">
+      </div>
+
+      <div class="mb-3">
+        <input type="text" id="autor" placeholder="Autor" class="form-control">
+      </div>
+
+      <div class="mb-3">
+        <input type="text" id="descripcion" placeholder="Descripcion" class="form-control">
+      </div>
+
+      <button onclick="saveLibro()" class="btn btn-primary w-100">Añadir</button>
+    </div>
+  </div>
+
+  <script>
+    getLibros();
+
+    async function getLibros() {
+      const res = await fetch('/api/libros');
+      const libros = await res.json();
+      const list = document.getElementById('libro-list');
+      list.innerHTML = '';
+
+      libros.forEach(libro => {
+        list.innerHTML += `
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <strong>${libro.titulo}</strong><br>
+              <small>${libro.autor || ''}</small><br>
+              <small>${libro.descripcion || ''}</small>
+
+            </div>
+            <div>
+              <button class="btn btn-sm btn-warning me-1" onclick="prepareEdit(${libro.id}, '${libro.titulo}', \`${libro.autor || ''}\`, '${libro.descripcion}')">Editar</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteLibro(${libro.id})">Eliminar</button>
+            </div>
+          </li>`;
+      });
+    }
+
+    function prepareEdit(id, titulo, autor, descripcion) {
+      document.getElementById('libro-id').value = id;
+      document.getElementById('titulo').value = titulo;
+      document.getElementById('autor').value = autor;
+      document.getElementById('descripcion').value = descripcion;
+
+    }
+
+    async function saveLibro() {
+      const id = document.getElementById('libro-id').value;
+      const titulo = document.getElementById('titulo').value.trim();
+      const autor = document.getElementById('autor').value.trim();
+      const descripcion = document.getElementById('descripcion').value.trim();
+
+
+      if (!titulo) {
+        alert("El titulo es obligatorio");
+        return;
+      }
+
+      const method = id ? 'PUT' : 'POST';
+      const url = id ? `/api/libros/${id}` : '/api/libros';
+
+      await fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ titulo, autor, descripcion })
+      });
+
+      document.getElementById('libro-id').value = '';
+      document.getElementById('titulo').value = '';
+      document.getElementById('autor').value = '';
+      document.getElementById('descripcion').value = '';
+      getLibros();
+    }
+
+    async function deleteLibro(id) {
+      await fetch(`/api/libros/${id}`, { method: 'DELETE' });
+      getLibros();
+    }
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
